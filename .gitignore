@@ -1,0 +1,7 @@
+# Project-specific exclusions
+logs/
+legacy/
+obj/
+bin/
+analysis_of_script/
+.env
