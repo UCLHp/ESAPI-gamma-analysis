@@ -5,15 +5,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Runtime.CompilerServices;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
+using System.Text;
+using System.Reflection;
+
+
+//[assembly: AssemblyVersion("1.1.0")]
+//[assembly: AssemblyFileVersion("1.1.0")]
+[assembly: AssemblyInformationalVersion("1.1")]
 
 [assembly: ESAPIScript(IsWriteable = true)]
+
 
 namespace VMS.TPS
 {
     public partial class Script
     {
+       
         public void Execute(ScriptContext context, Window window)
         {
             context.Patient.BeginModifications();
@@ -146,18 +156,22 @@ namespace VMS.TPS
             Grid.SetRow(resultsLabel, 7);
             mainGrid.Children.Add(resultsLabel);
 
+            
+
             _resultsTextBlock = new TextBlock
             {
                 Text = "Select plans and click Calculate to see results.",
                 Margin = new Thickness(0, 5, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
                 Background = new SolidColorBrush(Colors.LightGray),
-                Padding = new Thickness(10)
+                Padding = new Thickness(10),
+                FontFamily = new FontFamily("Consolas")  // Important for table alignment!
             };
             Grid.SetRow(_resultsTextBlock, 8);
             mainGrid.Children.Add(_resultsTextBlock);
-
             Content = mainGrid;
+            _resultsTextBlock.Text = "Gamma Index Analysis Results\n";
+            _resultsTextBlock.Text += CreateTableHeader();
         }
 
         private void PopulatePlanComboBoxes()
@@ -199,47 +213,57 @@ namespace VMS.TPS
             {
                 _calculateButton.IsEnabled = false;
                 Mouse.OverrideCursor = Cursors.Wait;
-                _resultsTextBlock.Text = "Calculating gamma index... Please wait.";
-
+                
+                // Initialize headers only if this is the first calculation
+                if (string.IsNullOrEmpty(_resultsTextBlock.Text))
+                {
+                    _resultsTextBlock.Text = "Gamma Index Analysis Results\n";
+                    _resultsTextBlock.Text += CreateTableHeader();
+                }
+                
                 var referencePlan = _referencePlanCombo.SelectedItem as PlanSetup;
                 var targetPlan = _targetPlanCombo.SelectedItem as PlanSetup;
-
+                
                 if (referencePlan == null || targetPlan == null)
                 {
                     MessageBox.Show("Please select both reference and target plans.");
                     return;
                 }
-
                 if (referencePlan == targetPlan)
                 {
                     MessageBox.Show("Reference and target plans must be different.");
                     return;
                 }
-
                 if (!double.TryParse(_dtaTextBox.Text, out double dta) || dta <= 0)
                 {
                     MessageBox.Show("Please enter a valid DTA value (mm).");
                     return;
                 }
-
                 if (!double.TryParse(_ddTextBox.Text, out double dd) || dd <= 0)
                 {
                     MessageBox.Show("Please enter a valid DD value (%).");
                     return;
                 }
-
                 if (!double.TryParse(_minDoseTextBox.Text, out double minDosePercent) || minDosePercent < 0 || minDosePercent > 100)
                 {
                     MessageBox.Show("Please enter a valid minimum dose percentage (0-100%).");
                     return;
                 }
-
+                
                 bool isGlobal = _calculationTypeCombo.SelectedItem.ToString() == "Global";
-
                 var result = CalculateGammaIndexOptimized(referencePlan, targetPlan, dta, dd, minDosePercent, isGlobal);
-
-                _resultsTextBlock.Text = result.ResultText;
-
+                
+                // Append the formatted result row
+                _resultsTextBlock.Text += CreateTableRow(
+                    referencePlan.Id, 
+                    targetPlan.Id, 
+                    dta, 
+                    dd, 
+                    isGlobal ? "Global" : "Local",
+                    minDosePercent,
+                    result.PassRate
+                );
+                
                 bool createGammaPlot = _GammaPlotCombo.SelectedItem.ToString() == "Yes";
                 if (createGammaPlot)
                 {
@@ -249,7 +273,7 @@ namespace VMS.TPS
             catch (Exception ex)
             {
                 MessageBox.Show($"Error calculating gamma index: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                _resultsTextBlock.Text = $"Error: {ex.Message}";
+                _resultsTextBlock.Text += $"\nError: {ex.Message}\n";
             }
             finally
             {
@@ -257,6 +281,77 @@ namespace VMS.TPS
                 Mouse.OverrideCursor = null;
             }
         }
+
+        private string CreateTableHeader()
+        {
+            // Define column widths
+            int refPlanWidth = 20;
+            int targetPlanWidth = 20;
+            int dtaWidth = 8;
+            int ddWidth = 8;
+            int typeWidth = 8;
+            int minDoseWidth = 10;
+            int passRateWidth = 10;
+            
+            
+            string header = 
+                PadRight("Ref Plan", refPlanWidth) + " | " +
+                PadRight("Target Plan", targetPlanWidth) + " | " +
+                PadRight("DTA(mm)", dtaWidth) + " | " +
+                PadRight("DD(%)", ddWidth) + " | " +
+                PadRight("Type", typeWidth) + " | " +
+                PadRight("MinDose%", minDoseWidth) + " | " +
+                PadRight("Pass%", passRateWidth) + " | ";
+               
+            
+            // Add separator line
+            int totalWidth = refPlanWidth + targetPlanWidth + dtaWidth + ddWidth + typeWidth + 
+                            minDoseWidth + passRateWidth + (8 * 3); // 8 separators * 3 chars
+            header += new string('-', totalWidth) + "\n";
+            
+            return header;
+        }
+
+        private string CreateTableRow(string refPlan, string targetPlan, double dta, double dd, 
+                                    string calcType, double minDosePercent, double passRate)
+        {
+            // Same column widths as header
+            int refPlanWidth = 20;
+            int targetPlanWidth = 20;
+            int dtaWidth = 8;
+            int ddWidth = 8;
+            int typeWidth = 8;
+            int minDoseWidth = 10;
+            int passRateWidth = 10;
+           
+            
+            string row = 
+                PadRight(TruncateString(refPlan, refPlanWidth), refPlanWidth) + " | " +
+                PadRight(TruncateString(targetPlan, targetPlanWidth), targetPlanWidth) + " | " +
+                PadRight(dta.ToString("F1"), dtaWidth) + " | " +
+                PadRight(dd.ToString("F1"), ddWidth) + " | " +
+                PadRight(calcType, typeWidth) + " | " +
+                PadRight(minDosePercent.ToString("F1"), minDoseWidth) + " | " +
+                PadRight(passRate.ToString("F1"), passRateWidth) + " | ";
+              
+            
+            return row;
+        }
+
+        private string PadRight(string text, int width)
+        {
+            if (text.Length >= width)
+                return text.Substring(0, width);
+            return text + new string(' ', width - text.Length);
+        }
+
+        private string TruncateString(string text, int maxLength)
+        {
+            if (text.Length <= maxLength)
+                return text;
+            return text.Substring(0, maxLength - 3) + "...";
+        }
+
 
         /// <summary>
         /// Optimized gamma calculation - single-threaded with pre-computed values and flat arrays
@@ -302,7 +397,7 @@ namespace VMS.TPS
             // Use flat array for gamma results - better cache locality
             var gammaArrayFlat = new double[refXSize * refYSize * refZSize];
 
-            // Initialize to -1 (not evaluated)
+            // Initialize to -1 (not yet evaluated)
             for (int i = 0; i < gammaArrayFlat.Length; i++)
                 gammaArrayFlat[i] = -1.0;
 
@@ -360,17 +455,17 @@ namespace VMS.TPS
 
                     for (int x = 0; x < refXSize; x++)
                     {
-                        int refIdx = x + y * refXSize + z * refXYSize;
+                        int refIdx = x + y * refXSize + z * refXYSize; // converts indexs over x, y, z to a flat index value by multiplying by array size in different dimensions
                         double refDoseValue = refDoseArray[refIdx];
 
                         // Skip voxels below threshold
                         if (refDoseValue < minDoseThreshold)
                             continue;
 
-                        totalVoxels++;
+                        totalVoxels++; // we start counting here
 
-                        // Calculate reference position (inline for performance)
-                        double refPosX = yzContribX + x * refXDirX;
+                        // Calculate reference position (inline for performance, i.e. nested addition is faster)
+                        double refPosX = yzContribX + x * refXDirX; // this is actually =  refOriginX + ( z * refZDirX + y * refYDirX + x * refXDirX  )
                         double refPosY = yzContribY + x * refXDirY;
                         double refPosZ = yzContribZ + x * refXDirZ;
 
@@ -483,7 +578,7 @@ namespace VMS.TPS
             }
 
             double passRate = totalVoxels > 0 ? (passedVoxels / (double)totalVoxels) * 100.0 : 0.0;
-
+            
             string resultText = $"Gamma Analysis Results:\n" +
                                 $"Reference Plan: {referencePlan.Id}\n" +
                                 $"Target Plan: {targetPlan.Id}\n" +
@@ -501,7 +596,7 @@ namespace VMS.TPS
                 ResultText = resultText,
                 GammaArray = gammaArray,
                 ReferenceDose = referenceDose,
-                PassRate = passRate
+                PassRate = passRate,
             };
         }
 
@@ -516,7 +611,7 @@ namespace VMS.TPS
             _targetZPositions = new double[props.ZSize];
 
             // For each axis, pre-compute the position values
-            // Assumes axis-aligned grids (most common case in Eclipse)
+            // Assumes axis-aligned grids
             for (int i = 0; i < props.XSize; i++)
                 _targetXPositions[i] = props.Origin.x + i * props.XRes * props.XDirection.x;
 
@@ -564,7 +659,6 @@ namespace VMS.TPS
 
         /// <summary>
         /// Optimized interpolation search - returns gamma squared to avoid sqrt
-        /// No HashSet allocations, no string formatting
         /// </summary>
         private double GetBestGammaSquaredOptimized(
             double refPosX, double refPosY, double refPosZ, double refDose,
@@ -790,7 +884,7 @@ namespace VMS.TPS
             if (X < 0 || X > deltaX)
                 return double.MaxValue;
 
-            // Calculate interpolated position and dose
+            // Calculate interpolated position and dose linearly
             double t = X / deltaX;
             double Dx = Da + deltaD * t;
 
@@ -832,8 +926,8 @@ namespace VMS.TPS
         {
             try
             {
-                string glob_or_loc = isGlobal ? "glob" : "loc";
-                string gammaplanId = $"{Math.Round(PassRate, 1)}%{dta}mm{dd}%{minDosePercent}%min_{referencePlan.Id}_{targetPlan.Id}_{glob_or_loc}";
+                string glob_or_loc = isGlobal ? "Global" : "Local";
+                string gammaplanId = $"{dta}mm{dd}%{minDosePercent}%min_{glob_or_loc}";
                 if (gammaplanId.Length > 13)
                     gammaplanId = gammaplanId.Substring(0, 13);
 
@@ -841,11 +935,17 @@ namespace VMS.TPS
                 StructureSet structureSet = referencePlan.StructureSet;
 
                 ExternalPlanSetup gammaPlan = course.AddExternalPlanSetup(structureSet);
+
                 gammaPlan.Id = gammaplanId;
 
                 var beamsToRemove = gammaPlan.Beams.ToList();
-                foreach (var beam in beamsToRemove)
+                foreach (var beam in beamsToRemove) // remove beams so we can copy the evaluation dose
                     gammaPlan.RemoveBeam(beam);
+                
+                // Store base plan and timestamp in plan comment box
+                //string datetime = DateTime.Now.ToString("HH:mm:ss, yyy-MM-dd");
+                //gammaPlan.Comment = ("Reference Plan: " + referencePlan.Id + ". Target Plan: " + targetPlan.Id + "at" + datetime + "\n DTA: "+dta+" mm. DD: "+dd+" %. "+"Max Dose Cutoff: "+minDosePercent+" %. "+glob_or_loc);
+                
 
                 EvaluationDose evaluationDose = gammaPlan.CopyEvaluationDose(referencePlan.Dose);
 
@@ -867,6 +967,11 @@ namespace VMS.TPS
 
                     evaluationDose.SetVoxels(z, gammaPlane);
                 }
+
+                
+
+                
+                
             }
             catch (Exception ex)
             {
