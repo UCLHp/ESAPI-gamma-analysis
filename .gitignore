@@ -5,3 +5,5 @@ obj/
 bin/
 analysis_of_script/
 .env
+.vs/
+*.vsidx

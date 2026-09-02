@@ -3,11 +3,11 @@
   "WorkspaceRootPath": "O:\\ESAPI\\WIPScripts\\matts_projects\\Projects\\script_builder_tester\\GammaAnalysis\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|gammaAnalysis||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A8B7E4C2-5F3D-4E6A-9C8B-1D2E3F4A5B6C}|gammaAnalysis.csproj|O:\\ESAPI\\WIPScripts\\matts_projects\\Projects\\script_builder_tester\\GammaAnalysis\\gammaanalysis.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{A8B7E4C2-5F3D-4E6A-9C8B-1D2E3F4A5B6C}|gammaAnalysis.csproj|solutionrelative:gammaanalysis.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|gammaAnalysis||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A8B7E4C2-5F3D-4E6A-9C8B-1D2E3F4A5B6C}|gammaAnalysis.csproj|o:\\esapi\\wipscripts\\matts_projects\\projects\\script_builder_tester\\gammaanalysis\\||{B270807C-D8C6-49EB-8EBE-8E8D566637A1}|5e9a8ac2-4f34-4521-858f-4c248ba31532"
@@ -20,11 +20,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "gammaAnalysis.cs",
               "DocumentMoniker": "O:\\ESAPI\\WIPScripts\\matts_projects\\Projects\\script_builder_tester\\GammaAnalysis\\gammaAnalysis.cs",
               "RelativeDocumentMoniker": "gammaAnalysis.cs",
@@ -32,11 +32,12 @@
               "RelativeToolTip": "gammaAnalysis.cs",
               "ViewState": "AgIAAEwCAAAAAAAAAAAAwFcCAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-05T12:35:31.396Z"
+              "WhenOpened": "2025-12-05T12:35:31.396Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "gammaAnalysis",
               "DocumentMoniker": "O:\\ESAPI\\WIPScripts\\matts_projects\\Projects\\script_builder_tester\\GammaAnalysis\\gammaAnalysis.csproj",
               "RelativeDocumentMoniker": "gammaAnalysis.csproj",

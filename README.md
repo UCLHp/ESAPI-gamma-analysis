@@ -6,7 +6,7 @@ Overview
 This Eclipse Scripting API (ESAPI) plugin calculates 3D gamma index between two dose distributions and optionally creates a gamma distribution plan for visualization in Eclipse.
 Features
 
-Global or Local normalization - Choose between global (maximum dose) or local (reference dose at each point) normalization
+Global or Local normalization - Choose between global (maximum dose of Grid B) or local (Dose value of checked grid voxel) normalization
 Customizable criteria - Set Distance-to-Agreement (DTA), Dose Difference (DD), and minimum dose threshold
 Gamma distribution visualization - Optionally create a plan showing the gamma distribution overlaid on CT
 Performance optimized - Handles full 3D dose grids with pre-computed lookup tables and flat array optimization
